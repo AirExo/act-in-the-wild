@@ -1,0 +1,74 @@
+{
+    "robot_left": {
+        "name": "flexiv",
+        "robot_ip_address": "192.168.2.100",
+        "pc_ip_address": "192.168.2.35",
+        "gripper": {
+            "name": "robotiq-2f-85",
+            "port": "/dev/ttyUSB1",
+            "logger_name": "gripper-left",
+            "streaming_freq": 30
+        },
+        "logger_name": "flexiv-left",
+        "streaming_freq": 30,
+        "joint_num": 7
+    },
+    "robot_right": {
+        "name": "flexiv",
+        "robot_ip_address": "192.168.3.100",
+        "pc_ip_address": "192.168.3.35",
+        "gripper": {
+        },
+        "logger_name": "flexiv-right",
+        "streaming_freq": 30,
+        "joint_num": 7
+    },
+    "cameras": [
+        {
+            "name": "realsense",
+            "serial": "104122060811",
+            "frame_rate": 30,
+            "resolution": [1280, 720],
+            "align": 1,
+            "logger_name": "RealSense Camera",
+            "streaming_freq": 30
+        }
+    ],
+    "initialization": {
+        "robot_left": [-0.5236, -1.4835, -1.9199, 0.7679, 0.5585, 1.5708, 1.3963],
+        "robot_right": [-0.7854, -1.4835, -1.9024, 0.4712, 0.6283, 4.5204, 0.0000],
+        "params_left": {
+            "max_vel": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "max_acc": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+        },
+        "params_right": {
+            "max_vel": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+            "max_acc": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+        }
+    },
+    "dof": {
+        "robot_left": 7,
+        "robot_right": 7
+    },
+    "action": {
+        "fixed_left": {
+            "4": 0.5585,
+            "5": 1.5708,
+            "6": 1.3963
+        },
+        "fixed_right": {
+            "4": 0.6283,
+            "5": 4.5204,
+            "6": 0.0000
+        },
+        "params_left": {
+            "max_vel": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            "max_acc": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+        },
+        "params_right": {
+            "max_vel": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+            "max_acc": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+        }
+    }
+
+}
