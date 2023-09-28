@@ -1,7 +1,4 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel
 import torch
 import numpy as np
 import pickle
@@ -30,18 +27,6 @@ def main(args):
     save_epoch = args['save_epoch']
     resume_ckpt = args['resume_ckpt']
     itw = args['in_the_wild']
-
-    # Initialize distributed training
-    global local_rank
-    local_rank = torch.distributed.get_rank()
-    world_size = torch.distributed.get_world_size()
-
-    # Update batch sizes based on the number of GPUs
-    batch_size_train = batch_size_train // world_size
-    batch_size_val = batch_size_val // world_size
-    torch.cuda.set_device(local_rank)
-    global device
-    device = torch.device('cuda', local_rank)
 
     # get task parameters
     from constants import TASK_CONFIGS
@@ -123,9 +108,9 @@ def make_policy(policy_class, policy_config):
 
 def make_optimizer(policy_class, policy):
     if policy_class == 'ACT':
-        optimizer = policy.module.configure_optimizers() 
+        optimizer = policy.configure_optimizers() 
     elif policy_class == 'CNNMLP':
-        optimizer = policy.module.configure_optimizers() 
+        optimizer = policy.configure_optimizers() 
     else:
         raise NotImplementedError
     return optimizer
@@ -133,7 +118,7 @@ def make_optimizer(policy_class, policy):
 def forward_pass(data, policy, device):
     image_data, qpos_data, action_data, is_pad = data
     image_data, qpos_data, action_data, is_pad = image_data.to(device), qpos_data.to(device), action_data.to(device), is_pad.to(device)
-    return policy.module(qpos_data, image_data, action_data, is_pad) # TODO remove None
+    return policy(qpos_data, image_data, action_data, is_pad)
 
 
 def train_bc(train_dataloader, val_dataloader, config):
@@ -143,14 +128,14 @@ def train_bc(train_dataloader, val_dataloader, config):
     policy_class = config['policy_class']
     policy_config = config['policy_config']
 
-    set_seed(seed)
+    set_seed(seed)    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     policy = make_policy(policy_class, policy_config)
 
     if config['resume_ckpt'] is not None:
         policy.load_state_dict(torch.load(config['resume_ckpt'], map_location = device))
-    else:
-        policy = DistributedDataParallel(policy, device_ids=[local_rank], output_device=local_rank)
+    
     optimizer = make_optimizer(policy_class, policy)
 
     train_history = []
@@ -173,7 +158,7 @@ def train_bc(train_dataloader, val_dataloader, config):
             epoch_val_loss = epoch_summary['loss']
             if epoch_val_loss < min_val_loss:
                 min_val_loss = epoch_val_loss
-                best_ckpt_info = (epoch, min_val_loss, deepcopy(policy.module.state_dict()))
+                best_ckpt_info = (epoch, min_val_loss, deepcopy(policy.state_dict()))
         print(f'Val loss:   {epoch_val_loss:.5f}')
         summary_string = ''
         for k, v in epoch_summary.items():
@@ -202,11 +187,11 @@ def train_bc(train_dataloader, val_dataloader, config):
         print(summary_string)
         if epoch % config["save_epoch"] == 0:
             ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{epoch}_seed_{seed}.ckpt')
-            torch.save(policy.module.state_dict(), ckpt_path)
+            torch.save(policy.state_dict(), ckpt_path)
             plot_history(train_history, validation_history, epoch, ckpt_dir, seed)
 
     ckpt_path = os.path.join(ckpt_dir, f'policy_last.ckpt')
-    torch.save(policy.module.state_dict(), ckpt_path)
+    torch.save(policy.state_dict(), ckpt_path)
 
     best_epoch, min_val_loss, best_state_dict = best_ckpt_info
     ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{best_epoch}_seed_{seed}.ckpt')
@@ -255,6 +240,5 @@ if __name__ == '__main__':
     parser.add_argument('--chunk_size', action='store', type=int, help='chunk_size', required=False)
     parser.add_argument('--hidden_dim', action='store', type=int, help='hidden_dim', required=False)
     parser.add_argument('--dim_feedforward', action='store', type=int, help='dim_feedforward', required=False)
-    torch.distributed.init_process_group(backend="nccl")
     
     main(vars(parser.parse_args()))

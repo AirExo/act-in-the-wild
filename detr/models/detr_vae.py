@@ -7,7 +7,6 @@ from torch import nn
 from torch.autograd import Variable
 from .backbone import build_backbone
 from .transformer import build_transformer, TransformerEncoder, TransformerEncoderLayer
-from .autoregressive_action import AutoregressiveActionDecoder
 
 import numpy as np
 from einops import rearrange
@@ -35,7 +34,7 @@ def get_sinusoid_encoding_table(n_position, d_hid):
 
 class DETRVAE(nn.Module):
     """ This is the DETR module that performs object detection """
-    def __init__(self, backbones, transformer, encoder, state_dim, num_queries, camera_names, autoregressive_bins = 1):
+    def __init__(self, backbones, transformer, encoder, state_dim, num_queries, camera_names):
         """ Initializes the model.
         Parameters:
             backbones: torch module of the backbone to be used. See backbone.py
@@ -44,7 +43,6 @@ class DETRVAE(nn.Module):
             num_queries: number of object queries, ie detection slot. This is the maximal number of objects
                          DETR can detect in a single image. For COCO, we recommend 100 queries.
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
-            autoregressive_bins: the autoregressive bins of action decoding head.
         """
         super().__init__()
         self.num_queries = num_queries
@@ -52,11 +50,7 @@ class DETRVAE(nn.Module):
         self.transformer = transformer
         self.encoder = encoder
         hidden_dim = transformer.d_model
-        self.autoregressive_bins = autoregressive_bins
-        if self.autoregressive_bins > 1:
-            self.action_head = AutoregressiveActionDecoder(hidden_dim, state_dim, autoregressive_bins)
-        else:
-            self.action_head = nn.Linear(hidden_dim, state_dim)
+        self.action_head = nn.Linear(hidden_dim, state_dim)
         self.is_pad_head = nn.Linear(hidden_dim, 1)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
         if backbones is not None:
@@ -255,8 +249,7 @@ def build(args):
         encoder,
         state_dim=args.state_dim,
         num_queries=args.num_queries,
-        camera_names=args.camera_names,
-        autoregressive_bins=args.autoregressive_bins
+        camera_names=args.camera_names
     )
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)

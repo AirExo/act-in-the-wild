@@ -67,7 +67,6 @@ def get_args_parser():
     parser.add_argument('--control_freq', action='store', type=float, help='control frequency', required=False)
     parser.add_argument('--resume_ckpt', action='store', type=str, help='checkpoint to resume training', default=None, required=False)
     parser.add_argument('--in_the_wild', action='store_true', help='In the wild configuration', required=False)
-    parser.add_argument('--autoregressive_bins', action='store', type=int, help='autoregressive bins', default=1, required=False)
 
     return parser
 

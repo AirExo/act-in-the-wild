@@ -103,7 +103,7 @@ class HorizonRecorder(object):
             return torch.stack(self.rec)
 
 
-class WholeBodyDataset(Dataset):
+class WholeArmDataset(Dataset):
     def __init__(
         self, 
         path,
@@ -127,7 +127,7 @@ class WholeBodyDataset(Dataset):
     ):
         """
         Args:
-          - path: str, the path to the whole body dataset;
+          - path: str, the path to the whole arm dataset;
           - task_name: str, the task name;
           - split: (optionoal) str, default: 'train', the dataset split;
           - freq: (optional) int [positive], default: 20, the frequency of data (if frequency is too high, then change to default frequency);
@@ -145,7 +145,7 @@ class WholeBodyDataset(Dataset):
           - scene_filter: (optional) lambda expression Int -> Bool, default: (lambda sid: True), whether to select the scene in the dataset;
           - train_val_filter: (optional) lambda expression Int -> Bool, default: (lambda sid: sid % 10 != 0), the filter for train dataset and validation dataset, True for train and False for validation.
         """
-        super(WholeBodyDataset, self).__init__()
+        super(WholeArmDataset, self).__init__()
         if not os.path.exists(path):
             raise AttributeError("Dataset not found.")
         if split not in ['train', 'val']:
@@ -481,7 +481,7 @@ class WholeBodyDataset(Dataset):
 
 
 # In-the-wild version
-class WholeBodyITWDataset(Dataset):
+class WholeArmITWDataset(Dataset):
     def __init__(
         self, 
         path,
@@ -505,7 +505,7 @@ class WholeBodyITWDataset(Dataset):
     ):
         """
         Args:
-          - path: str, the path to the whole body dataset;
+          - path: str, the path to the whole arm dataset;
           - task_name: str, the task name;
           - split: (optionoal) str, default: 'train', the dataset split;
           - freq: (optional) int [positive], default: 20, the frequency of data (if frequency is too high, then change to default frequency);
@@ -523,7 +523,7 @@ class WholeBodyITWDataset(Dataset):
           - scene_filter: (optional) lambda expression Int -> Bool, default: (lambda sid: True), whether to select the scene in the dataset;
           - train_val_filter: (optional) lambda expression Int -> Bool, default: (lambda sid: sid % 10 != 0), the filter for train dataset and validation dataset, True for train and False for validation.
         """
-        super(WholeBodyITWDataset, self).__init__()
+        super(WholeArmITWDataset, self).__init__()
         if not os.path.exists(path):
             raise AttributeError("Dataset not found.")
         if split not in ['train', 'val']:
@@ -787,15 +787,15 @@ class WholeBodyITWDataset(Dataset):
 
 
 if __name__ == '__main__': 
-    dataset = WholeBodyDataset('/aidata/whole-body/task2/', task_name = 'grasp_from_the_curtained_shelf', split = 'train', freq = 1.0, preload = False, history_horizon = 0, action_horizon = 1, obs_visual_rep = False)
+    dataset = WholeArmDataset('/path/to/data/task2/', task_name = 'grasp_from_the_curtained_shelf', split = 'train', freq = 1.0, preload = False, history_horizon = 0, action_horizon = 1, obs_visual_rep = False)
     print(len(dataset))
     print(dataset[0])
     """
-    dataset = WholeBodyDataset('/aidata/whole-body/task1/', task_name = 'gather_balls', split = 'train', freq = 1.0, preload = False, history_horizon = 0, action_horizon = 1, obs_visual_rep = False)
+    dataset = WholeArmDataset('/path/to/data/task1/', task_name = 'gather_balls', split = 'train', freq = 1.0, preload = False, history_horizon = 0, action_horizon = 1, obs_visual_rep = False)
     print(len(dataset))
     print(dataset[0])
     
-    dataset = WholeBodyITWDataset('/aidata/whole-body/task1-itw/', task_name = 'gather_balls', split = 'train', freq = 1.0, preload = False, history_horizon = 0, action_horizon = 1, obs_visual_rep = False)
+    dataset = WholeArmITWDataset('/path/to/data/task1-in-the-wild/', task_name = 'gather_balls', split = 'train', freq = 1.0, preload = False, history_horizon = 0, action_horizon = 1, obs_visual_rep = False)
     print(len(dataset))
     print(dataset[0])
     """

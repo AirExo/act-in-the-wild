@@ -4,19 +4,19 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from tqdm import tqdm
-from wholebody import WholeBodyDataset, WholeBodyITWDataset
+from wholearm import WholeArmDataset, WholeArmITWDataset
 
 
-class WholeBodyDatasetWrapper(torch.utils.data.Dataset):
+class WholeArmDatasetWrapper(torch.utils.data.Dataset):
     def __init__(self, dataset_dir, task_name, split, freq, camera_names, chunk_size, norm_stats):
-        super(WholeBodyDatasetWrapper).__init__()
+        super(WholeArmDatasetWrapper).__init__()
         self.norm_stats = norm_stats
         self.split = split
         if chunk_size is None:
             action_horizon = 1
         else:
             action_horizon = chunk_size
-        self.dataset = WholeBodyDataset(
+        self.dataset = WholeArmDataset(
             dataset_dir, 
             task_name, 
             split = split, 
@@ -27,7 +27,7 @@ class WholeBodyDatasetWrapper(torch.utils.data.Dataset):
             obs_visual_rep = False, 
             obs_image_size = (480, 640), 
             norm_stats = norm_stats,
-            scene_filter = (lambda sid: True),
+            scene_filter = (lambda sid: sid % 5 == 2 or sid % 10 == 0),
             train_val_filter = (lambda sid: sid % 10 != 0)
         )
         print('Dataset loaded, # {} sample: {}'.format(split, len(self.dataset)))
@@ -44,16 +44,16 @@ class WholeBodyDatasetWrapper(torch.utils.data.Dataset):
         return image_data, qpos_data, action_data, is_pad
 
 
-class WholeBodyITWDatasetWrapper(torch.utils.data.Dataset):
+class WholeArmITWDatasetWrapper(torch.utils.data.Dataset):
     def __init__(self, dataset_dir, task_name, split, freq, camera_names, chunk_size, norm_stats):
-        super(WholeBodyITWDatasetWrapper).__init__()
+        super(WholeArmITWDatasetWrapper).__init__()
         self.norm_stats = norm_stats
         self.split = split
         if chunk_size is None:
             action_horizon = 1
         else:
             action_horizon = chunk_size
-        self.dataset = WholeBodyITWDataset(
+        self.dataset = WholeArmITWDataset(
             dataset_dir, 
             task_name, 
             split = split, 
@@ -65,7 +65,8 @@ class WholeBodyITWDatasetWrapper(torch.utils.data.Dataset):
             obs_image_size = (480, 640), 
             norm_stats = norm_stats, 
             scene_filter = (lambda sid: sid <= 100),
-            train_val_filter = (lambda sid: sid % 10 != 0)
+            train_val_filter = (lambda sid: sid % 10 != 0),
+            action_gripper_cls_threshold = 0.1
         )
         print('Dataset loaded, # sample: {}'.format(len(self.dataset)))
     
@@ -115,11 +116,11 @@ def load_data(dataset_dir, task_name, camera_names, batch_size_train, batch_size
             raise AttributeError('Invalid task.')
         print('Normalization statistics calculated and saved.')
     if itw: 
-        train_dataset = WholeBodyITWDatasetWrapper(dataset_dir, task_name, 'train', freq, camera_names, chunk_size, norm_stats)
-        val_dataset = WholeBodyITWDatasetWrapper(dataset_dir, task_name, 'val', freq, camera_names, chunk_size, norm_stats)
+        train_dataset = WholeArmITWDatasetWrapper(dataset_dir, task_name, 'train', freq, camera_names, chunk_size, norm_stats)
+        val_dataset = WholeArmITWDatasetWrapper(dataset_dir, task_name, 'val', freq, camera_names, chunk_size, norm_stats)
     else:
-        train_dataset = WholeBodyDatasetWrapper(dataset_dir, task_name, 'train', freq, camera_names, chunk_size, norm_stats)
-        val_dataset = WholeBodyDatasetWrapper(dataset_dir, task_name, 'val', freq, camera_names, chunk_size, norm_stats)
+        train_dataset = WholeArmDatasetWrapper(dataset_dir, task_name, 'train', freq, camera_names, chunk_size, norm_stats)
+        val_dataset = WholeArmDatasetWrapper(dataset_dir, task_name, 'val', freq, camera_names, chunk_size, norm_stats)
     train_dataloader = DataLoader(train_dataset, batch_size = batch_size_train, shuffle = True, pin_memory = True, num_workers = 100)
     val_dataloader = DataLoader(val_dataset, batch_size = batch_size_val, shuffle = True, pin_memory = True, num_workers = 100)
 
@@ -155,7 +156,7 @@ def get_stats(
     Get the statistics of dataset.
 
     Args:
-      - path: str, the path to the whole body dataset;
+      - path: str, the path to the whole arm dataset;
       - func: lambda expression, the specific area of interest.
     """
     rec = []

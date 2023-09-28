@@ -1,7 +1,7 @@
 import os
 
 ### Task parameters
-DATA_DIR = '/aidata/whole-body/'
+DATA_DIR = '/path/to/data/'    
 BASE_DIR = '.'
 TASK_CONFIGS = {
     'gather_balls': {
@@ -9,7 +9,7 @@ TASK_CONFIGS = {
         "dataset_dir_itw": os.path.join(DATA_DIR, 'task1-in-the-wild'),
         'episode_len': 400,
         'camera_names': ['top'],
-        'state_dim': 8,          # reduced, original 14
+        'state_dim': 8,
         'stats_dir': os.path.join(BASE_DIR, 'stats', 'gather_balls'),
         'norm_stats': os.path.join(BASE_DIR, 'stats', 'gather_balls', 'norm_stats.npy')
     },

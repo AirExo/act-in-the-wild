@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import json
 import time
 import torch
@@ -142,7 +141,6 @@ def eval_bc(config):
     robot_right.send_joint_pos(cfgs.initialization.robot_right, wait = True, **cfgs.initialization.params_right)
     
     if "gripper_left" in cfgs.initialization.keys():
-        print(cfgs.initialization.gripper_left)
         if cfgs.initialization.gripper_left == 1:
             robot_left.open_gripper()
         else:
@@ -156,8 +154,7 @@ def eval_bc(config):
     time.sleep(5)
     
     # preparation for load policy
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ckpt = config['ckpt']
     state_dim = config['state_dim']
@@ -278,23 +275,18 @@ def eval_bc(config):
             robot_left.send_joint_pos(robot_action_left, wait = False, **cfgs.action.params_left)
             robot_right.send_joint_pos(robot_action_right, wait = False, **cfgs.action.params_right)
             if gripper_action_left is not None:
-                print(gripper_action_left)
-                if gripper_action_left < -0.2:
-                    gripper_before = 1
+                if gripper_action_left < cfgs.action.gripper_close_threshold_left:
                     robot_left.close_gripper()
-                elif gripper_action_left <= 0.05 and gripper_before == 1:
-                    robot_left.close_gripper()
-                else:
-                    gripper_before = 0
+                if gripper_action_left > cfgs.action.gripper_open_threshold_left:
                     robot_left.open_gripper()
 
             if gripper_action_right is not None:
-                # TODO: gripper action
-                pass
+                if gripper_action_right < cfgs.action.gripper_close_threshold_right:
+                    robot_right.close_gripper()
+                if gripper_action_right > cfgs.action.gripper_open_threshold_right:
+                    robot_right.open_gripper()
 
             duration = time.time() - start_time
-            if t < 3:
-                time.sleep(0.4)
             if duration < step_time:
                 time.sleep(step_time - duration)
 
