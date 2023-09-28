@@ -195,7 +195,6 @@ def eval_bc(config):
     # step time
     step_time = 1.0 / config["control_freq"]
 
-    gripper_before = 0
     with torch.inference_mode():
         for t in range(max_timesteps):
             start_time = time.time()
@@ -210,11 +209,9 @@ def eval_bc(config):
             if task_name == 'gather_balls':
                 qpos = np.concatenate((robot_left.get_joint_pos()[:4],robot_right.get_joint_pos()[:4]))  
             elif task_name == 'grasp_from_the_curtained_shelf':    
-                # print(robot_left.get_gripper_info())
                 arr = []
                 arr.append(convert_gripper(robot_left.get_gripper_info()[0]))
                 qpos = np.concatenate((robot_left.get_joint_pos()[:7], arr, robot_right.get_joint_pos()[:4]))
-                # print(qpos)  
             else:
                 raise AttributeError('Invalid task.')
             qpos = pre_process(torch.from_numpy(qpos))
